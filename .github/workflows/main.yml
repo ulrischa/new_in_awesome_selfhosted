@@ -1,0 +1,63 @@
+name: Check awesome-selfhosted README for new lines
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the target repository
+      uses: actions/checkout@v2
+      with:
+        repository: awesome-selfhosted/awesome-selfhosted
+        path: target-repo
+        fetch-depth: 2  # fetches last 2 commits to compare changes
+
+    - name: Delete all issues
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const issues = await github.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: "open"
+          });
+          for (const issue of issues.data) {
+            await github.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              state: "closed"
+            });
+          }
+
+    - name: Check for new lines in README.md
+      id: check
+      run: |
+        cd target-repo
+        git diff HEAD^ HEAD -- README.md | grep '^+' | grep -v '^\++' > changes.txt
+        if [[ -s changes.txt ]]; then
+          echo "New lines found."
+          echo "::set-output name=new_lines::true"
+        else
+          echo "No new lines found."
+          echo "::set-output name=new_lines::false"
+        fi
+
+    - name: Create GitHub Issue if new lines found
+      if: steps.check.outputs.new_lines == 'true'
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const changes = require('fs').readFileSync('target-repo/changes.txt', 'utf8');
+          await github.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: 'New lines added to README.md in awesome-selfhosted/awesome-selfhosted',
+            body: `New lines were added to README.md in the awesome-selfhosted/awesome-selfhosted repository. Here are the changes:\n\n\`\`\`\n${changes}\n\`\`\``
+          });
