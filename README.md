@@ -8,5 +8,6 @@ It then creates an issue, so when notifications are activated you get the news v
 Feel free to fork, run at your own timescale.
 
 The action needs write permissions.
-![image](https://github.com/ulrischa/new_in_awesome_selfhosted/assets/3016070/19cfc29a-a6e4-4f4b-b446-5158ad63ee77)
+![image](https://github.com/ulrischa/new_in_awesome_selfhosted/assets/3016070/8165498e-0c6a-4dfd-be6a-6cc7ed1b0869)
+
 
